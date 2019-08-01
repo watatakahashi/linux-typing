@@ -2,12 +2,10 @@
   <div class="home">
     <div>タイピングゲーム</div>
     <div v-if="starting">
-      <button @click="finish">終了する</button>
       <div v-if="playing">
         <div>問題数：{{questionIndex + 1}}/{{questions.length}}</div>
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
-        <!-- <h1>問題：{{question}}</h1> -->
         <h1>説明文</h1>
         <h1>
           <span class="transparent">{{clearAnswer}}</span>
@@ -16,6 +14,7 @@
         <h1></h1>
       </div>
       <div v-else>
+        <button @click="finish">ホームへ</button>
         <div>タイプ数:{{typeCount}}回</div>
         <div>タイピング速度：{{typeSpeed}}回/秒</div>
         <div>タイプミス回数：{{typeMissCount}}回</div>
@@ -37,17 +36,18 @@ export default class Home extends Vue {
   starting: boolean = false
   playing: boolean = false
   // 問題回答用
+
   // questions: string[] = [
   //   'cp file1 dir2',
   //   'mv file1 dir1',
   //   'cd /usr/src',
   //   'chown -R hoge dir'
   // ]
-  questions: string[] = ['aaa', 'iii', 'uuu']
+
+  // ダミー問題
+  questions: string[] = ['a aa', 'i ii', 'uuu']
 
   questionIndex: number = 0
-  clearAnswer: string = ''
-  notAnswer: string = ''
   charIndex: number = 0
   // 記録用
   typeCount: number = 0
@@ -73,8 +73,6 @@ export default class Home extends Vue {
   // 初期化処理
   reset() {
     this.questionIndex = 0
-    this.clearAnswer = ''
-    this.notAnswer = this.question
     this.charIndex = 0
     this.typeMissCount = 0
     this.playing = false
@@ -93,10 +91,7 @@ export default class Home extends Vue {
   // キーボード入力と文字が一致しているか確認
   keyCheck(e: any) {
     this.typeCount += 1
-    const character = String.fromCharCode(e.keyCode)
-    if (this.question[this.charIndex] === character) {
-      this.clearAnswer += character
-      this.notAnswer = this.notAnswer.slice(1)
+    if (this.question[this.charIndex] === String.fromCharCode(e.keyCode)) {
       this.charIndex += 1
     } else {
       this.typeMissCount += 1
@@ -108,6 +103,20 @@ export default class Home extends Vue {
     return this.questions[this.questionIndex]
   }
 
+  // タイプしたと比較用の回答
+  get replacedAnswer(): string {
+    return this.question.replace(/ /g, '□')
+  }
+
+  // 透明な文字列（回答済み）
+  get clearAnswer(): string {
+    return this.replacedAnswer.slice(0, this.charIndex)
+  }
+
+  // 非透明な文字列（未回答）
+  get notAnswer(): string {
+    return this.replacedAnswer.slice(this.charIndex)
+  }
   // タイピング速度
   get typeSpeed(): number {
     if (this.timer <= 0) {
@@ -115,15 +124,6 @@ export default class Home extends Vue {
     } else {
       return this.typeCount / this.timer
     }
-  }
-
-  // 全回答文字数
-  get questionsTotalChars(): number {
-    let sum = 0
-    this.questions.forEach(element => {
-      sum += element.length
-    })
-    return sum
   }
 
   // スコアはWPM(1分あたりの打鍵数)×正確率
@@ -135,22 +135,30 @@ export default class Home extends Vue {
     )
   }
 
+  // 全回答文字数
+  get questionsTotalChars(): number {
+    let sum = 0
+    this.questions.forEach(element => {
+      sum += element.length
+    })
+    return sum
+  }
+
   // 正解と一致したら次の問題、全部正解するとクリア
   @Watch('clearAnswer')
   onWatchChanged(val: string) {
-    if (val === this.question) {
+    if (val === this.replacedAnswer) {
       this.questionIndex += 1
       this.charIndex = 0
       if (this.questions.length === this.questionIndex) {
         this.gameClear()
       }
-      this.notAnswer = this.question
-      this.clearAnswer = ''
     }
   }
   // クリア時の処理
   gameClear() {
     this.playing = false
+    this.questionIndex = 0
     window.removeEventListener('keypress', this.keyCheck)
     alert('クリア！')
   }
