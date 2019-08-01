@@ -32,15 +32,14 @@ export default class Home extends Vue {
   starting: boolean = false
   playing: boolean = false
   // 問題回答用
-  questions: string[] = [
-    'aaa',
-    'iii',
-    'uuu',
-    'cp file1 dir2',
-    'mv file1 dir1',
-    'cd /usr/src',
-    'chown -R hoge dir'
-  ]
+  // questions: string[] = [
+  //   'cp file1 dir2',
+  //   'mv file1 dir1',
+  //   'cd /usr/src',
+  //   'chown -R hoge dir'
+  // ]
+  questions: string[] = ['aaa', 'iii', 'uuu']
+
   questionIndex: number = 0
   answer: string = ''
   charIndex: number = 0
