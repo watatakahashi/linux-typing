@@ -7,8 +7,13 @@
         <div>問題数：{{questionIndex + 1}}/{{questions.length}}</div>
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
-        <h2>{{question}}</h2>
-        <h2>{{answer}}</h2>
+        <!-- <h1>問題：{{question}}</h1> -->
+        <h1>説明文</h1>
+        <h1>
+          <span class="transparent">{{clearAnswer}}</span>
+          <span>{{notAnswer}}</span>
+        </h1>
+        <h1></h1>
       </div>
       <div v-else>
         <div>タイプ数:{{typeCount}}回</div>
@@ -41,7 +46,8 @@ export default class Home extends Vue {
   questions: string[] = ['aaa', 'iii', 'uuu']
 
   questionIndex: number = 0
-  answer: string = ''
+  clearAnswer: string = ''
+  notAnswer: string = ''
   charIndex: number = 0
   // 記録用
   typeCount: number = 0
@@ -67,7 +73,8 @@ export default class Home extends Vue {
   // 初期化処理
   reset() {
     this.questionIndex = 0
-    this.answer = ''
+    this.clearAnswer = ''
+    this.notAnswer = this.question
     this.charIndex = 0
     this.typeMissCount = 0
     this.playing = false
@@ -88,7 +95,8 @@ export default class Home extends Vue {
     this.typeCount += 1
     const character = String.fromCharCode(e.keyCode)
     if (this.question[this.charIndex] === character) {
-      this.answer += character
+      this.clearAnswer += character
+      this.notAnswer = this.notAnswer.slice(1)
       this.charIndex += 1
     } else {
       this.typeMissCount += 1
@@ -96,12 +104,12 @@ export default class Home extends Vue {
   }
 
   // 問題を表示
-  get question() {
+  get question(): string {
     return this.questions[this.questionIndex]
   }
 
   // タイピング速度
-  get typeSpeed() {
+  get typeSpeed(): number {
     if (this.timer <= 0) {
       return 0
     } else {
@@ -109,8 +117,8 @@ export default class Home extends Vue {
     }
   }
 
-  // 回答文字数
-  get questionsTotalChars() {
+  // 全回答文字数
+  get questionsTotalChars(): number {
     let sum = 0
     this.questions.forEach(element => {
       sum += element.length
@@ -119,7 +127,7 @@ export default class Home extends Vue {
   }
 
   // スコアはWPM(1分あたりの打鍵数)×正確率
-  get score() {
+  get score(): number {
     return (
       (this.questionsTotalChars / this.timer) *
       60 *
@@ -128,7 +136,7 @@ export default class Home extends Vue {
   }
 
   // 正解と一致したら次の問題、全部正解するとクリア
-  @Watch('answer')
+  @Watch('clearAnswer')
   onWatchChanged(val: string) {
     if (val === this.question) {
       this.questionIndex += 1
@@ -136,7 +144,8 @@ export default class Home extends Vue {
       if (this.questions.length === this.questionIndex) {
         this.gameClear()
       }
-      this.answer = ''
+      this.notAnswer = this.question
+      this.clearAnswer = ''
     }
   }
   // クリア時の処理
@@ -147,3 +156,9 @@ export default class Home extends Vue {
   }
 }
 </script>
+
+<style>
+.transparent {
+  opacity: 0.5;
+}
+</style>
