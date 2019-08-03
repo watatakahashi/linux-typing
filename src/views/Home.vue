@@ -19,6 +19,20 @@
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
         <div>スコア：{{score}}</div>
+        <div class="table">
+          <table border="1">
+            <tr>
+              <th>問題番号</th>
+              <th>ヒント</th>
+              <th>問題文</th>
+            </tr>
+            <tr v-for="(question,index) in questions" v-bind:key="index">
+              <td>{{question.questionNumber}}</td>
+              <td>{{question.question}}</td>
+              <td>{{question.comment}}</td>
+            </tr>
+          </table>
+        </div>
       </div>
     </div>
     <div v-else>
@@ -31,6 +45,8 @@
 import { Component, Vue, Watch } from 'vue-property-decorator'
 
 interface Question {
+  // id: string
+  questionNumber: number
   question: string
   comment: string
 }
@@ -50,9 +66,9 @@ export default class Home extends Vue {
 
   // ダミー問題
   questions: Question[] = [
-    { question: 'a aa', comment: 'コメントあ' },
-    { question: 'i ii', comment: '解説' },
-    { question: 'uuu', comment: '' }
+    { questionNumber: 1, question: ' aaa', comment: 'コメント1' },
+    { questionNumber: 2, question: 'iii', comment: 'コメント2' },
+    { questionNumber: 3, question: 'uuu', comment: 'コメント3' }
   ]
 
   questionIndex: number = 0
@@ -180,5 +196,9 @@ export default class Home extends Vue {
 <style>
 .transparent {
   opacity: 0.5;
+}
+table {
+  margin: 0 auto;
+  border: 1rem;
 }
 </style>
