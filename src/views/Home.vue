@@ -23,8 +23,8 @@
           <table border="1">
             <tr>
               <th>問題番号</th>
-              <th>ヒント</th>
               <th>問題文</th>
+              <th>コメント</th>
             </tr>
             <tr v-for="(question,index) in questions" v-bind:key="index">
               <td>{{question.questionNumber}}</td>
@@ -43,10 +43,12 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
+import * as firebase from 'firebase/app'
+import 'firebase/firestore'
 
 interface Question {
   // id: string
-  questionNumber: number
+  questionNumber: string
   question: string
   comment: string
 }
@@ -56,30 +58,31 @@ export default class Home extends Vue {
   starting: boolean = false
   playing: boolean = false
   // 問題回答用
-
-  // questions: string[] = [
-  //   'cp file1 dir2',
-  //   'mv file1 dir1',
-  //   'cd /usr/src',
-  //   'chown -R hoge dir'
-  // ]
-
-  // ダミー問題
-  questions: Question[] = [
-    { questionNumber: 1, question: ' aaa', comment: 'コメント1' },
-    { questionNumber: 2, question: 'iii', comment: 'コメント2' },
-    { questionNumber: 3, question: 'uuu', comment: 'コメント3' }
-  ]
-
+  questions: Question[] = []
   questionIndex: number = 0
   charIndex: number = 0
   // 記録用
   typeCount: number = 0
   typeMissCount: number = 0
   timer: number = -1
+  db = firebase.firestore()
 
-  mounted(): void {
+  async mounted(): Promise<void> {
+    await this.getDocuments()
     this.reset()
+    this.db
+      .collection('typing-questions')
+      .doc('3')
+      .set({
+        question: ' uuu',
+        comment: 'コメント3'
+      })
+      .then(function() {
+        console.log('Document successfully written!')
+      })
+      .catch(function(error) {
+        console.error('Error writing document: ', error)
+      })
   }
 
   // ゲームスタート時
@@ -103,6 +106,25 @@ export default class Home extends Vue {
     this.playing = false
     this.timer = -1 // countUpを最初0秒表示させるため-1に設定
   }
+  async getDocuments() {
+    await this.db
+      .collection('typing-questions')
+      .get()
+      .then(querySnapshot => {
+        querySnapshot.forEach(document => {
+          const qs: Question = {
+            questionNumber: document.id,
+            question: document.data().question,
+            comment: document.data().comment
+          }
+          this.questions.push(qs)
+        })
+        console.log('Questionデータ取得')
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
 
   // タイマー
   countUp(): void {
@@ -125,6 +147,9 @@ export default class Home extends Vue {
 
   // 問題を表示
   get question(): string {
+    if (this.questions.length === 0) {
+      return ''
+    }
     return this.questions[this.questionIndex].question
   }
   // コメントを表示
@@ -190,6 +215,20 @@ export default class Home extends Vue {
     this.questionIndex = 0
     window.removeEventListener('keypress', this.keyCheck)
     alert('クリア！')
+  }
+  addRanking() {
+    this.db
+      .collection('typing-ranking')
+      .add({
+        username: '太郎',
+        score: this.score
+      })
+      .then(() => {
+        console.log('ランキングデータ追加')
+      })
+      .catch(error => {
+        console.error('Error writing document: ', error)
+      })
   }
 }
 </script>
