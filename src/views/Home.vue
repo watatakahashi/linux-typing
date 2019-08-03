@@ -6,12 +6,11 @@
         <div>問題数：{{questionIndex + 1}}/{{questions.length}}</div>
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
-        <h1>説明文</h1>
+        <h1>説明文：{{comment}}</h1>
         <h1>
           <span class="transparent">{{clearAnswer}}</span>
           <span>{{notAnswer}}</span>
         </h1>
-        <h1></h1>
       </div>
       <div v-else>
         <button @click="finish">ホームへ</button>
@@ -31,6 +30,11 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 
+interface Question {
+  question: string
+  comment: string
+}
+
 @Component({})
 export default class Home extends Vue {
   starting: boolean = false
@@ -45,7 +49,11 @@ export default class Home extends Vue {
   // ]
 
   // ダミー問題
-  questions: string[] = ['a aa', 'i ii', 'uuu']
+  questions: Question[] = [
+    { question: 'a aa', comment: 'コメントあ' },
+    { question: 'i ii', comment: '解説' },
+    { question: 'uuu', comment: '' }
+  ]
 
   questionIndex: number = 0
   charIndex: number = 0
@@ -54,24 +62,24 @@ export default class Home extends Vue {
   typeMissCount: number = 0
   timer: number = -1
 
-  mounted() {
+  mounted(): void {
     this.reset()
   }
 
   // ゲームスタート時
-  start() {
+  start(): void {
     this.starting = true
     this.playing = true
     this.countUp()
     window.addEventListener('keypress', this.keyCheck)
   }
   // ホーム画面へ戻る際に実行
-  finish() {
+  finish(): void {
     this.starting = false
     this.reset()
   }
   // 初期化処理
-  reset() {
+  reset(): void {
     this.questionIndex = 0
     this.charIndex = 0
     this.typeMissCount = 0
@@ -80,7 +88,7 @@ export default class Home extends Vue {
   }
 
   // タイマー
-  countUp() {
+  countUp(): void {
     if (!this.playing) {
       return
     }
@@ -100,7 +108,11 @@ export default class Home extends Vue {
 
   // 問題を表示
   get question(): string {
-    return this.questions[this.questionIndex]
+    return this.questions[this.questionIndex].question
+  }
+  // コメントを表示
+  get comment(): string {
+    return this.questions[this.questionIndex].comment
   }
 
   // タイプしたと比較用の回答
@@ -139,14 +151,14 @@ export default class Home extends Vue {
   get questionsTotalChars(): number {
     let sum = 0
     this.questions.forEach(element => {
-      sum += element.length
+      sum += element.question.length
     })
     return sum
   }
 
   // 正解と一致したら次の問題、全部正解するとクリア
   @Watch('clearAnswer')
-  onWatchChanged(val: string) {
+  onWatchChanged(val: string): void {
     if (val === this.replacedAnswer) {
       this.questionIndex += 1
       this.charIndex = 0
@@ -156,7 +168,7 @@ export default class Home extends Vue {
     }
   }
   // クリア時の処理
-  gameClear() {
+  gameClear(): void {
     this.playing = false
     this.questionIndex = 0
     window.removeEventListener('keypress', this.keyCheck)
