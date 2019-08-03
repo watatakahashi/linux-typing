@@ -98,6 +98,7 @@ export default class Home extends Vue {
   reset(): void {
     this.questionIndex = 0
     this.charIndex = 0
+    this.typeCount = 0
     this.typeMissCount = 0
     this.playing = false
     this.timer = -1 // countUpを最初0秒表示させるため-1に設定
