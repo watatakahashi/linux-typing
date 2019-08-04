@@ -6,7 +6,7 @@
         <div>問題数：{{questionIndex + 1}}/{{questions.length}}</div>
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
-        <h1>説明文：{{comment}}</h1>
+        <h1>{{comment}}</h1>
         <h1>
           <span class="transparent">{{clearAnswer}}</span>
           <span>{{notAnswer}}</span>
@@ -14,19 +14,20 @@
       </div>
       <div v-else>
         <button @click="finish">ホームへ</button>
+        <h2>スコア</h2>
         <div>タイプ数:{{typeCount}}回</div>
-        <div>タイピング速度：{{typeSpeed}}回/秒</div>
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
+        <div>タイピング速度：{{typeSpeed}}回/秒</div>
         <div>スコア：{{score}}</div>
         <div>
           名前：
-          <input type="text" value="名無し" />
+          <input type="text" v-model="username" />
         </div>
         <div>
-          <button>ランキングに登録</button>
+          <button @click="addRanking" :class="{hidden:isHidden}">ランキングに登録</button>
         </div>
-        <!-- <div>ランキング</div>
+        <h2>ランキング</h2>
         <div>
           <table border="1">
             <tr>
@@ -34,13 +35,14 @@
               <th>名前</th>
               <th>スコア</th>
             </tr>
-            <tr v-for="(ranking,index) in (rankingList, 5)" v-bind:key="index">
+            <tr v-for="(ranking,index) in rankingList" v-bind:key="index">
               <td>{{index + 1}}位</td>
               <td>{{ranking.username}}</td>
-              <td>{{question.score}}</td>
+              <td>{{ranking.score}}</td>
             </tr>
           </table>
-        </div>-->
+        </div>
+        <h2>問題履歴</h2>
         <div class="table">
           <table border="1">
             <tr>
@@ -60,6 +62,9 @@
     <div v-else>
       <button @click="start">開始する</button>
     </div>
+    <div>starting:{{starting}}</div>
+    <div>playing:{{starting}}</div>
+    <div>isHidden:{{starting}}</div>
   </div>
 </template>
 
@@ -83,8 +88,10 @@ interface Ranking {
 @Component({})
 export default class Home extends Vue {
   db = firebase.firestore()
+  // 画面表示用
   starting: boolean = false
   playing: boolean = false
+  isHidden: boolean = false
   // 問題回答用
   questions: Question[] = []
   questionIndex: number = 0
@@ -93,6 +100,7 @@ export default class Home extends Vue {
   typeCount: number = 0
   typeMissCount: number = 0
   timer: number = -1
+  username: string = '名無し'
   // ランキング用
   rankingList: Ranking[] = []
   // AudioContextを初期化
@@ -100,23 +108,10 @@ export default class Home extends Vue {
   buffer?: AudioBuffer
 
   async created(): Promise<void> {
-    await this.getDocuments()
+    await this.getQuestions()
     await this.getRanking()
-    this.reset()
-    this.db
-      .collection('typing-questions')
-      .doc('3')
-      .set({
-        question: ' uuu',
-        comment: 'コメント3'
-      })
-      .then(function() {
-        console.log('Document successfully written!')
-      })
-      .catch(function(error) {
-        console.error('Error writing document: ', error)
-      })
     this.onloadSound()
+    this.reset()
   }
 
   // オーディオバッファの取得
@@ -174,26 +169,8 @@ export default class Home extends Vue {
     this.typeCount = 0
     this.typeMissCount = 0
     this.playing = false
+    this.isHidden = false
     this.timer = -1 // countUpを最初0秒表示させるため-1に設定
-  }
-  async getDocuments() {
-    await this.db
-      .collection('typing-questions')
-      .get()
-      .then(querySnapshot => {
-        querySnapshot.forEach(document => {
-          const qs: Question = {
-            questionNumber: document.id,
-            question: document.data().question,
-            comment: document.data().comment
-          }
-          this.questions.push(qs)
-        })
-        console.log('Questionデータ取得')
-      })
-      .catch(err => {
-        console.log(err)
-      })
   }
 
   // タイマー
@@ -227,6 +204,9 @@ export default class Home extends Vue {
   }
   // コメントを表示
   get comment(): string {
+    if (this.questions.length === 0) {
+      return ''
+    }
     return this.questions[this.questionIndex].comment
   }
 
@@ -249,16 +229,16 @@ export default class Home extends Vue {
     if (this.timer <= 0) {
       return 0
     } else {
-      return this.typeCount / this.timer
+      return Math.round((this.typeCount / this.timer) * 10) / 10
     }
   }
 
   // スコアはWPM(1分あたりの打鍵数)×正確率
   get score(): number {
-    return (
+    return Math.round(
       (this.questionsTotalChars / this.timer) *
-      60 *
-      ((this.typeCount - this.typeMissCount) / this.typeCount)
+        60 *
+        ((this.typeCount - this.typeMissCount) / this.typeCount)
     )
   }
 
@@ -289,12 +269,14 @@ export default class Home extends Vue {
     window.removeEventListener('keypress', this.keyCheck)
     alert('クリア！')
   }
-  addRanking() {
+  addRanking(): Promise<void> | undefined {
+    this.isHidden = true
+    return
     this.db
       .collection('typing-ranking')
       .add({
-        username: '太郎',
-        score: 30
+        username: this.username,
+        score: this.score
       })
       .then(() => {
         console.log('ランキングデータ追加')
@@ -306,6 +288,8 @@ export default class Home extends Vue {
   async getRanking(): Promise<void> {
     await this.db
       .collection('typing-ranking')
+      .orderBy('score', 'desc')
+      .limit(5)
       .get()
       .then(querySnapshot => {
         querySnapshot.forEach(document => {
@@ -323,6 +307,40 @@ export default class Home extends Vue {
         console.log(err)
       })
   }
+  async addQuestion(): Promise<void> {
+    this.db
+      .collection('typing-questions')
+      .doc('3')
+      .set({
+        question: ' uuu',
+        comment: 'コメント3'
+      })
+      .then(function() {
+        console.log('Document successfully written!')
+      })
+      .catch(function(error) {
+        console.error('Error writing document: ', error)
+      })
+  }
+  async getQuestions() {
+    await this.db
+      .collection('typing-questions')
+      .get()
+      .then(querySnapshot => {
+        querySnapshot.forEach(document => {
+          const qs: Question = {
+            questionNumber: document.id,
+            question: document.data().question,
+            comment: document.data().comment
+          }
+          this.questions.push(qs)
+        })
+        console.log('Questionデータ取得')
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
 }
 </script>
 
@@ -333,5 +351,8 @@ export default class Home extends Vue {
 table {
   margin: 0 auto;
   border: 1rem;
+}
+.hidden {
+  display: none;
 }
 </style>
