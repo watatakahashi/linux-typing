@@ -70,6 +70,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
 import * as firebase from 'firebase/app'
 import 'firebase/firestore'
 import * as audio from '@/plugin/audio'
+import * as utils from '@/plugin/utils'
 
 interface Question {
   // id: string
@@ -85,13 +86,16 @@ interface Ranking {
 
 @Component({})
 export default class Home extends Vue {
+  // 定数
   db = firebase.firestore()
+  questionsTable: string = 'typing-questions'
+  rankingTable: string = 'typing-ranking'
+  QuestionCount = 1
   // 画面表示用
   starting: boolean = false
   playing: boolean = false
   isHidden: boolean = false
   // 問題回答用
-  QuestionCount = 10
   questions: Question[] = []
   questionIndex: number = 0
   charIndex: number = 0
@@ -106,7 +110,6 @@ export default class Home extends Vue {
   buffer?: AudioBuffer
 
   async created(): Promise<void> {
-    await this.getQuestions()
     await this.getRanking()
     this.onloadSound()
     this.reset()
@@ -132,7 +135,8 @@ export default class Home extends Vue {
     this.reset()
   }
   // 初期化処理
-  reset(): void {
+  async reset(): Promise<void> {
+    await this.getQuestions()
     this.questionIndex = 0
     this.charIndex = 0
     this.typeCount = 0
@@ -242,7 +246,7 @@ export default class Home extends Vue {
     this.isHidden = true
     // return
     await this.db
-      .collection('typing-ranking')
+      .collection(this.rankingTable)
       .add({
         username: this.username,
         score: this.score
@@ -256,7 +260,7 @@ export default class Home extends Vue {
   }
   async getRanking(): Promise<void> {
     await this.db
-      .collection('typing-ranking')
+      .collection(this.rankingTable)
       .orderBy('score', 'desc')
       .limit(5)
       .onSnapshot(querySnapshot => {
@@ -273,7 +277,7 @@ export default class Home extends Vue {
   }
   async addQuestion(): Promise<void> {
     this.db
-      .collection('typing-questions')
+      .collection(this.questionsTable)
       .doc('3')
       .set({
         question: ' uuu',
@@ -286,9 +290,9 @@ export default class Home extends Vue {
         console.error('Error writing document: ', error)
       })
   }
-  async getQuestions() {
+  async getQuestions(): Promise<void> {
     await this.db
-      .collection('typing-questions')
+      .collection(this.questionsTable)
       .get()
       .then(querySnapshot => {
         querySnapshot.forEach(document => {
@@ -299,6 +303,8 @@ export default class Home extends Vue {
           }
           this.questions.push(qs)
         })
+        this.questions = utils.arrayShuffle(this.questions)
+        this.questions = this.questions.slice(0, this.QuestionCount)
       })
       .catch(err => {
         console.log(err)
