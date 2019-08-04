@@ -19,6 +19,7 @@
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
         <div>スコア：{{score}}</div>
+        <input type="text" />
         <div class="table">
           <table border="1">
             <tr>
@@ -38,6 +39,8 @@
     <div v-else>
       <button @click="start">開始する</button>
     </div>
+    <audio id="audio" preload="auto" src="@/assets/miss.mp3"></audio>
+    <!-- <img src="@/assets/logo.png" alt /> -->
   </div>
 </template>
 
@@ -52,11 +55,18 @@ interface Question {
   question: string
   comment: string
 }
+interface Ranking {
+  id: string
+  username: string
+  score: number
+}
 
 @Component({})
 export default class Home extends Vue {
+  db = firebase.firestore()
   starting: boolean = false
   playing: boolean = false
+  audio: HTMLAudioElement = new Audio()
   // 問題回答用
   questions: Question[] = []
   questionIndex: number = 0
@@ -65,9 +75,10 @@ export default class Home extends Vue {
   typeCount: number = 0
   typeMissCount: number = 0
   timer: number = -1
-  db = firebase.firestore()
+  // ランキング用
+  rankingList: Ranking[] = []
 
-  async mounted(): Promise<void> {
+  async created(): Promise<void> {
     await this.getDocuments()
     this.reset()
     this.db
@@ -99,6 +110,8 @@ export default class Home extends Vue {
   }
   // 初期化処理
   reset(): void {
+    this.audio = new Audio()
+    this.audio.src = './se/miss2.mp3'
     this.questionIndex = 0
     this.charIndex = 0
     this.typeCount = 0
@@ -142,6 +155,7 @@ export default class Home extends Vue {
       this.charIndex += 1
     } else {
       this.typeMissCount += 1
+      this.audio.play()
     }
   }
 
@@ -228,6 +242,25 @@ export default class Home extends Vue {
       })
       .catch(error => {
         console.error('Error writing document: ', error)
+      })
+  }
+  getRanking() {
+    this.db
+      .collection('typing-ranking')
+      .get()
+      .then(querySnapshot => {
+        querySnapshot.forEach(document => {
+          const ranking: Ranking = {
+            id: document.id,
+            username: document.data().username,
+            score: document.data().score
+          }
+          this.rankingList.push(ranking)
+        })
+        console.log('Rankingデータ取得')
+      })
+      .catch(err => {
+        console.log(err)
       })
   }
 }
