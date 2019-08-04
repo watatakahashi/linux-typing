@@ -69,6 +69,7 @@
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import * as firebase from 'firebase/app'
 import 'firebase/firestore'
+import * as audio from '@/plugin/audio'
 
 interface Question {
   // id: string
@@ -102,7 +103,6 @@ export default class Home extends Vue {
   // ランキング用
   rankingList: Ranking[] = []
   // AudioContextを初期化
-  context = new AudioContext()
   buffer?: AudioBuffer
 
   async created(): Promise<void> {
@@ -112,38 +112,9 @@ export default class Home extends Vue {
     this.reset()
   }
 
-  // オーディオバッファの取得
-  getAudioBuffer(
-    url: string,
-    fn: {
-      (buf: AudioBuffer): void
-    }
-  ) {
-    let req = new XMLHttpRequest()
-    req.responseType = 'arraybuffer'
-    req.onreadystatechange = () => {
-      if (req.readyState === 4) {
-        if (req.status === 0 || req.status === 200) {
-          this.context.decodeAudioData(req.response, buffer => {
-            fn(buffer)
-          })
-        }
-      }
-    }
-    req.open('GET', url, true)
-    req.send('')
-  }
-  // サウンド再生
-  playSound(buffer: AudioBuffer) {
-    let source = this.context.createBufferSource()
-    source.buffer = buffer
-    source.connect(this.context.destination)
-    // 再生
-    source.start(0)
-  }
   // サウンドの読み込み
   onloadSound() {
-    this.getAudioBuffer('./se/se5.mp3', buffer => {
+    audio.getAudioBuffer('./se/se5.mp3', buffer => {
       this.buffer = buffer
     })
   }
@@ -188,7 +159,7 @@ export default class Home extends Vue {
     } else {
       this.typeMissCount += 1
       if (this.buffer) {
-        this.playSound(this.buffer)
+        audio.playSound(this.buffer)
       }
     }
   }
