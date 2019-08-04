@@ -179,7 +179,6 @@ export default class Home extends Vue {
       return
     }
     this.timer += 1
-    this.playSound(this.buffer)
     setTimeout(this.countUp, 1000)
   }
 
@@ -190,7 +189,8 @@ export default class Home extends Vue {
       this.charIndex += 1
     } else {
       this.typeMissCount += 1
-      this.audio.play()
+      // this.audio.play()
+      this.playSound(this.buffer)
     }
   }
 
