@@ -62,9 +62,6 @@
     <div v-else>
       <button @click="start">開始する</button>
     </div>
-    <div>starting:{{starting}}</div>
-    <div>playing:{{starting}}</div>
-    <div>isHidden:{{starting}}</div>
   </div>
 </template>
 
@@ -93,6 +90,7 @@ export default class Home extends Vue {
   playing: boolean = false
   isHidden: boolean = false
   // 問題回答用
+  QuestionCount = 10
   questions: Question[] = []
   questionIndex: number = 0
   charIndex: number = 0
@@ -269,10 +267,10 @@ export default class Home extends Vue {
     window.removeEventListener('keypress', this.keyCheck)
     alert('クリア！')
   }
-  addRanking(): Promise<void> | undefined {
+  async addRanking(): Promise<void> {
     this.isHidden = true
-    return
-    this.db
+    // return
+    await this.db
       .collection('typing-ranking')
       .add({
         username: this.username,
@@ -290,8 +288,8 @@ export default class Home extends Vue {
       .collection('typing-ranking')
       .orderBy('score', 'desc')
       .limit(5)
-      .get()
-      .then(querySnapshot => {
+      .onSnapshot(querySnapshot => {
+        this.rankingList = []
         querySnapshot.forEach(document => {
           const ranking: Ranking = {
             id: document.id,
@@ -300,11 +298,6 @@ export default class Home extends Vue {
           }
           this.rankingList.push(ranking)
         })
-        console.log('Rankingデータ取得')
-        console.log(this.rankingList)
-      })
-      .catch(err => {
-        console.log(err)
       })
   }
   async addQuestion(): Promise<void> {
@@ -335,7 +328,6 @@ export default class Home extends Vue {
           }
           this.questions.push(qs)
         })
-        console.log('Questionデータ取得')
       })
       .catch(err => {
         console.log(err)
