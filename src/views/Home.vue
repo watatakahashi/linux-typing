@@ -19,7 +19,28 @@
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
         <div>スコア：{{score}}</div>
-        <input type="text" />
+        <div>
+          名前：
+          <input type="text" value="名無し" />
+        </div>
+        <div>
+          <button>ランキングに登録</button>
+        </div>
+        <!-- <div>ランキング</div>
+        <div>
+          <table border="1">
+            <tr>
+              <th>順位</th>
+              <th>名前</th>
+              <th>スコア</th>
+            </tr>
+            <tr v-for="(ranking,index) in (rankingList, 5)" v-bind:key="index">
+              <td>{{index + 1}}位</td>
+              <td>{{ranking.username}}</td>
+              <td>{{question.score}}</td>
+            </tr>
+          </table>
+        </div>-->
         <div class="table">
           <table border="1">
             <tr>
@@ -58,16 +79,12 @@ interface Ranking {
   username: string
   score: number
 }
-interface callbackType {
-  (aaa: any): void
-}
 
 @Component({})
 export default class Home extends Vue {
   db = firebase.firestore()
   starting: boolean = false
   playing: boolean = false
-  audio: HTMLAudioElement = new Audio()
   // 問題回答用
   questions: Question[] = []
   questionIndex: number = 0
@@ -80,39 +97,11 @@ export default class Home extends Vue {
   rankingList: Ranking[] = []
   // AudioContextを初期化
   context = new AudioContext()
-  buffer: any
-
-  getAudioBuffer(url: any, fn: callbackType) {
-    let req = new XMLHttpRequest()
-    req.responseType = 'arraybuffer'
-    req.onreadystatechange = () => {
-      if (req.readyState === 4) {
-        if (req.status === 0 || req.status === 200) {
-          this.context.decodeAudioData(req.response, buffer => {
-            fn(buffer)
-          })
-        }
-      }
-    }
-    req.open('GET', url, true)
-    req.send('')
-  }
-  playSound(buffer: any) {
-    let source = this.context.createBufferSource()
-    source.buffer = buffer
-    source.connect(this.context.destination)
-    // 再生
-    source.start(0)
-  }
-  // サウンドの読み込み
-  onloadSound() {
-    this.getAudioBuffer('./se/miss.mp3', buffer => {
-      this.buffer = buffer
-    })
-  }
+  buffer?: AudioBuffer
 
   async created(): Promise<void> {
     await this.getDocuments()
+    await this.getRanking()
     this.reset()
     this.db
       .collection('typing-questions')
@@ -130,6 +119,42 @@ export default class Home extends Vue {
     this.onloadSound()
   }
 
+  // オーディオバッファの取得
+  getAudioBuffer(
+    url: string,
+    fn: {
+      (buf: AudioBuffer): void
+    }
+  ) {
+    let req = new XMLHttpRequest()
+    req.responseType = 'arraybuffer'
+    req.onreadystatechange = () => {
+      if (req.readyState === 4) {
+        if (req.status === 0 || req.status === 200) {
+          this.context.decodeAudioData(req.response, buffer => {
+            fn(buffer)
+          })
+        }
+      }
+    }
+    req.open('GET', url, true)
+    req.send('')
+  }
+  // サウンド再生
+  playSound(buffer: AudioBuffer) {
+    let source = this.context.createBufferSource()
+    source.buffer = buffer
+    source.connect(this.context.destination)
+    // 再生
+    source.start(0)
+  }
+  // サウンドの読み込み
+  onloadSound() {
+    this.getAudioBuffer('./se/se5.mp3', buffer => {
+      this.buffer = buffer
+    })
+  }
+
   // ゲームスタート時
   start(): void {
     this.starting = true
@@ -144,8 +169,6 @@ export default class Home extends Vue {
   }
   // 初期化処理
   reset(): void {
-    this.audio = new Audio()
-    this.audio.src = './se/miss2.mp3'
     this.questionIndex = 0
     this.charIndex = 0
     this.typeCount = 0
@@ -189,8 +212,9 @@ export default class Home extends Vue {
       this.charIndex += 1
     } else {
       this.typeMissCount += 1
-      // this.audio.play()
-      this.playSound(this.buffer)
+      if (this.buffer) {
+        this.playSound(this.buffer)
+      }
     }
   }
 
@@ -270,7 +294,7 @@ export default class Home extends Vue {
       .collection('typing-ranking')
       .add({
         username: '太郎',
-        score: this.score
+        score: 30
       })
       .then(() => {
         console.log('ランキングデータ追加')
@@ -279,8 +303,8 @@ export default class Home extends Vue {
         console.error('Error writing document: ', error)
       })
   }
-  getRanking() {
-    this.db
+  async getRanking(): Promise<void> {
+    await this.db
       .collection('typing-ranking')
       .get()
       .then(querySnapshot => {
@@ -293,65 +317,12 @@ export default class Home extends Vue {
           this.rankingList.push(ranking)
         })
         console.log('Rankingデータ取得')
+        console.log(this.rankingList)
       })
       .catch(err => {
         console.log(err)
       })
   }
-
-  /*
-   * main.js
-   */
-
-  // // Audio 用の buffer を読み込む
-  // getAudioBuffer(url: any, fn: any){
-  //   var req = new XMLHttpRequest()
-  //   // array buffer を指定
-  //   req.responseType = 'arraybuffer'
-
-  //   req.onreadystatechange = () => {
-  //     if (req.readyState === 4) {
-  //       if (req.status === 0 || req.status === 200) {
-  //         // array buffer を audio buffer に変換
-  //         this.context.decodeAudioData(req.response, (buffer:any) => {
-  //           // コールバックを実行
-  //           fn(buffer)
-  //         })
-  //       }
-  //     }
-  //   }
-
-  //   req.open('GET', url, true)
-  //   req.send('')
-  // }
-
-  // // サウンドを再生
-  // playSound(buffer: any) {
-  //   // source を作成
-  //   var source = this.context.createBufferSource()
-  //   // buffer をセット
-  //   source.buffer = buffer
-  //   // context に connect
-  //   source.connect(this.context.destination)
-  //   // 再生
-  //   source.start(0)
-  // }
-
-  // // main
-  // window.onload = () => {
-  //   // サウンドを読み込む
-  //   this.getAudioBuffer(
-  //     './se/miss.mp3',
-  //     (buffer) => {
-  //       // 読み込み完了後にボタンにクリックイベントを登録
-  //       let btn = document.getElementById('btn')
-  //       btn.onclick = () => {
-  //         // サウンドを再生
-  //         this.playSound(buffer)
-  //       }
-  //     }
-  //   )
-  // }
 }
 </script>
 
