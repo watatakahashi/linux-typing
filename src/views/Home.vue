@@ -39,8 +39,6 @@
     <div v-else>
       <button @click="start">開始する</button>
     </div>
-    <audio id="audio" preload="auto" src="@/assets/miss.mp3"></audio>
-    <!-- <img src="@/assets/logo.png" alt /> -->
   </div>
 </template>
 
@@ -60,6 +58,9 @@ interface Ranking {
   username: string
   score: number
 }
+interface callbackType {
+  (aaa: any): void
+}
 
 @Component({})
 export default class Home extends Vue {
@@ -77,6 +78,38 @@ export default class Home extends Vue {
   timer: number = -1
   // ランキング用
   rankingList: Ranking[] = []
+  // AudioContextを初期化
+  context = new AudioContext()
+  buffer: any
+
+  getAudioBuffer(url: any, fn: callbackType) {
+    let req = new XMLHttpRequest()
+    req.responseType = 'arraybuffer'
+    req.onreadystatechange = () => {
+      if (req.readyState === 4) {
+        if (req.status === 0 || req.status === 200) {
+          this.context.decodeAudioData(req.response, buffer => {
+            fn(buffer)
+          })
+        }
+      }
+    }
+    req.open('GET', url, true)
+    req.send('')
+  }
+  playSound(buffer: any) {
+    let source = this.context.createBufferSource()
+    source.buffer = buffer
+    source.connect(this.context.destination)
+    // 再生
+    source.start(0)
+  }
+  // サウンドの読み込み
+  onloadSound() {
+    this.getAudioBuffer('./se/miss.mp3', buffer => {
+      this.buffer = buffer
+    })
+  }
 
   async created(): Promise<void> {
     await this.getDocuments()
@@ -94,6 +127,7 @@ export default class Home extends Vue {
       .catch(function(error) {
         console.error('Error writing document: ', error)
       })
+    this.onloadSound()
   }
 
   // ゲームスタート時
@@ -145,6 +179,7 @@ export default class Home extends Vue {
       return
     }
     this.timer += 1
+    this.playSound(this.buffer)
     setTimeout(this.countUp, 1000)
   }
 
@@ -263,6 +298,60 @@ export default class Home extends Vue {
         console.log(err)
       })
   }
+
+  /*
+   * main.js
+   */
+
+  // // Audio 用の buffer を読み込む
+  // getAudioBuffer(url: any, fn: any){
+  //   var req = new XMLHttpRequest()
+  //   // array buffer を指定
+  //   req.responseType = 'arraybuffer'
+
+  //   req.onreadystatechange = () => {
+  //     if (req.readyState === 4) {
+  //       if (req.status === 0 || req.status === 200) {
+  //         // array buffer を audio buffer に変換
+  //         this.context.decodeAudioData(req.response, (buffer:any) => {
+  //           // コールバックを実行
+  //           fn(buffer)
+  //         })
+  //       }
+  //     }
+  //   }
+
+  //   req.open('GET', url, true)
+  //   req.send('')
+  // }
+
+  // // サウンドを再生
+  // playSound(buffer: any) {
+  //   // source を作成
+  //   var source = this.context.createBufferSource()
+  //   // buffer をセット
+  //   source.buffer = buffer
+  //   // context に connect
+  //   source.connect(this.context.destination)
+  //   // 再生
+  //   source.start(0)
+  // }
+
+  // // main
+  // window.onload = () => {
+  //   // サウンドを読み込む
+  //   this.getAudioBuffer(
+  //     './se/miss.mp3',
+  //     (buffer) => {
+  //       // 読み込み完了後にボタンにクリックイベントを登録
+  //       let btn = document.getElementById('btn')
+  //       btn.onclick = () => {
+  //         // サウンドを再生
+  //         this.playSound(buffer)
+  //       }
+  //     }
+  //   )
+  // }
 }
 </script>
 
