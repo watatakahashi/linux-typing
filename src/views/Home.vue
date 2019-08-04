@@ -90,7 +90,7 @@ export default class Home extends Vue {
   db = firebase.firestore()
   questionsTable: string = 'typing-questions'
   rankingTable: string = 'typing-ranking'
-  QuestionCount = 1
+  QuestionCount = 3
   // 画面表示用
   starting: boolean = false
   playing: boolean = false
