@@ -88,9 +88,9 @@ interface Ranking {
 export default class Home extends Vue {
   // 定数
   db = firebase.firestore()
-  questionsTable: string = 'typing-questions'
-  rankingTable: string = 'typing-ranking'
-  QuestionCount = 3
+  questionsTable: string = 'typing-questions-beta'
+  rankingTable: string = 'typing-ranking-beta'
+  QuestionCount = 10
   // 画面表示用
   starting: boolean = false
   playing: boolean = false
@@ -295,6 +295,7 @@ export default class Home extends Vue {
       .collection(this.questionsTable)
       .get()
       .then(querySnapshot => {
+        this.questions = []
         querySnapshot.forEach(document => {
           const qs: Question = {
             questionNumber: document.id,
