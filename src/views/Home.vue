@@ -9,6 +9,7 @@
         <h1>{{comment}}</h1>
         <h1>
           <span class="transparent">{{clearAnswer}}</span>
+          <span class="underline">{{nowAnswer}}</span>
           <span>{{notAnswer}}</span>
         </h1>
       </div>
@@ -29,7 +30,7 @@
         </div>
         <h2>ランキング</h2>
         <div>
-          <table border="1">
+          <table class="table" border="1">
             <tr>
               <th>順位</th>
               <th>名前</th>
@@ -43,12 +44,12 @@
           </table>
         </div>
         <h2>問題履歴</h2>
-        <div class="table">
-          <table border="1">
+        <div>
+          <table class="table" border="1">
             <tr>
               <th>問題番号</th>
               <th>問題文</th>
-              <th>コメント</th>
+              <th>解説</th>
             </tr>
             <tr v-for="(question,index) in questions" v-bind:key="index">
               <td>{{question.questionNumber}}</td>
@@ -188,14 +189,18 @@ export default class Home extends Vue {
     return this.question.replace(/ /g, '□')
   }
 
-  // 透明な文字列（回答済み）
+  // 回答済み文字列
   get clearAnswer(): string {
     return this.replacedAnswer.slice(0, this.charIndex)
   }
 
-  // 非透明な文字列（未回答）
+  get nowAnswer(): string {
+    return this.replacedAnswer.slice(this.charIndex, this.charIndex + 1)
+  }
+
+  // 未回答文字列
   get notAnswer(): string {
-    return this.replacedAnswer.slice(this.charIndex)
+    return this.replacedAnswer.slice(this.charIndex + 1)
   }
   // タイピング速度
   get typeSpeed(): number {
@@ -316,9 +321,12 @@ export default class Home extends Vue {
 
 <style>
 .transparent {
-  opacity: 0.5;
+  opacity: 0.3;
 }
-table {
+.underline {
+  text-decoration: underline;
+}
+.table {
   margin: 0 auto;
   border: 1rem;
 }

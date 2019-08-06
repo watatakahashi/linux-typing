@@ -13,6 +13,21 @@
         <button @click="submit">送信</button>
       </div>
     </div>
+    <div>
+      <h2>問題テーブル</h2>
+      <table border="1">
+        <tr>
+          <th>問題番号</th>
+          <th>問題文</th>
+          <th>解説</th>
+        </tr>
+        <tr v-for="(question,index) in questions" v-bind:key="index">
+          <td>{{question.questionNumber}}</td>
+          <td>{{question.question}}</td>
+          <td>{{question.comment}}</td>
+        </tr>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -36,6 +51,10 @@ export default class Create extends Vue {
   comment: string = ''
   questionsTable: string = 'typing-questions-beta'
   questions: Question[] = []
+
+  mounted() {
+    this.getQuestionsCount()
+  }
 
   async submit() {
     await this.getQuestionsCount()
@@ -63,8 +82,10 @@ export default class Create extends Vue {
   }
   getQuestionsCount(): Promise<number> {
     return new Promise(resolve => {
+      this.questions = []
       this.db
         .collection(this.questionsTable)
+        .orderBy('questionNumber', 'asc')
         .get()
         .then(querySnapshot => {
           this.questions = []
