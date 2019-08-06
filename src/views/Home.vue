@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <div>タイピングゲーム</div>
+    <div>Linuxコマンドタイピングゲーム</div>
     <div v-if="starting">
       <div v-if="playing">
         <div>問題数：{{questionIndex + 1}}/{{questions.length}}</div>
@@ -117,7 +117,7 @@ export default class Home extends Vue {
   }
 
   // サウンドの読み込み
-  onloadSound() {
+  onloadSound(): void {
     audio.getAudioBuffer('./se/se5.mp3', buffer => {
       this.buffer = buffer
     })
