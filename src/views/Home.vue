@@ -72,18 +72,7 @@ import * as firebase from 'firebase/app'
 import 'firebase/firestore'
 import * as audio from '@/plugin/audio'
 import * as utils from '@/plugin/utils'
-
-interface Question {
-  // id: string
-  questionNumber: string
-  question: string
-  comment: string
-}
-interface Ranking {
-  id: string
-  username: string
-  score: number
-}
+import * as type from '@/types/type'
 
 @Component({})
 export default class Home extends Vue {
@@ -97,7 +86,7 @@ export default class Home extends Vue {
   playing: boolean = false
   isHidden: boolean = false
   // 問題回答用
-  questions: Question[] = []
+  questions: type.Question[] = []
   questionIndex: number = 0
   charIndex: number = 0
   // 記録用
@@ -106,7 +95,7 @@ export default class Home extends Vue {
   timer: number = -1
   username: string = '名無し'
   // ランキング用
-  rankingList: Ranking[] = []
+  rankingList: type.Ranking[] = []
   // AudioContextを初期化
   buffer?: AudioBuffer
 
@@ -271,7 +260,7 @@ export default class Home extends Vue {
       .onSnapshot(querySnapshot => {
         this.rankingList = []
         querySnapshot.forEach(document => {
-          const ranking: Ranking = {
+          const ranking: type.Ranking = {
             id: document.id,
             username: document.data().username,
             score: document.data().score
@@ -302,7 +291,7 @@ export default class Home extends Vue {
       .then(querySnapshot => {
         this.questions = []
         querySnapshot.forEach(document => {
-          const qs: Question = {
+          const qs: type.Question = {
             questionNumber: document.id,
             question: document.data().question,
             comment: document.data().comment

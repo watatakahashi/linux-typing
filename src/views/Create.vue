@@ -37,12 +37,7 @@ import * as firebase from 'firebase/app'
 import 'firebase/firestore'
 import * as audio from '@/plugin/audio'
 import * as utils from '@/plugin/utils'
-
-interface Question {
-  questionNumber: string
-  question: string
-  comment: string
-}
+import * as type from '@/types/type'
 
 @Component({})
 export default class Create extends Vue {
@@ -50,7 +45,7 @@ export default class Create extends Vue {
   question: string = ''
   comment: string = ''
   questionsTable: string = 'typing-questions-beta'
-  questions: Question[] = []
+  questions: type.Question[] = []
 
   mounted() {
     this.getQuestionsCount()
@@ -64,7 +59,7 @@ export default class Create extends Vue {
   }
 
   async addQuestion(): Promise<void> {
-    let question: Question = {
+    let question: type.Question = {
       questionNumber: String(this.questions.length + 1),
       question: this.question,
       comment: this.comment
@@ -90,7 +85,7 @@ export default class Create extends Vue {
         .then(querySnapshot => {
           this.questions = []
           querySnapshot.forEach(document => {
-            const qs: Question = document.data() as Question
+            const qs: type.Question = document.data() as type.Question
             this.questions.push(qs)
             return resolve(this.questions.length)
           })
