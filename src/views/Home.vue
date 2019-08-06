@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <div>Linuxコマンドタイピングゲーム</div>
+    <div>Linuxコマンドタイピング</div>
     <div v-if="starting">
       <div v-if="playing">
         <div>問題数：{{questionIndex + 1}}/{{questions.length}}</div>
