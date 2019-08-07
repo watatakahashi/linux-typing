@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import Index from './views/Index.vue'
 import Home from './views/Home.vue'
 import Create from './views/Create.vue'
 
@@ -11,11 +12,16 @@ export default new Router({
   routes: [
     {
       path: '/',
+      name: 'index',
+      component: Index
+    },
+    {
+      path: '/:gameId',
       name: 'home',
       component: Home
     },
     {
-      path: '/create',
+      path: '/create/:gameId',
       name: 'create',
       component: Create
     }

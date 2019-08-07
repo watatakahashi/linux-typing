@@ -3,26 +3,29 @@
     <div>
       <div>
         問題文：
-        <input type="text" v-model="question" />
+        <input type="text" v-model="question" placeholder="e.g. cd hoge" />
       </div>
       <div>
         コメント：
-        <input type="text" v-model="comment" />
+        <input type="text" v-model="comment" placeholder="e.g. hogeに移動する" />
       </div>
       <div>
-        <button @click="submit">送信</button>
+        <button @click="submit" :class="{hidden:isHidden}">問題を登録</button>
       </div>
     </div>
     <div>
-      <h2>問題テーブル</h2>
-      <table border="1">
+      <router-link :to="{ name: 'index'}">戻る</router-link>
+    </div>
+    <div>
+      <h2>{{gameId}}問題テーブル</h2>
+      <table class="table" border="1">
         <tr>
           <th>問題番号</th>
           <th>問題文</th>
           <th>解説</th>
         </tr>
         <tr v-for="(question,index) in questions" v-bind:key="index">
-          <td>{{question.questionNumber}}</td>
+          <td>{{question.questionId}}</td>
           <td>{{question.question}}</td>
           <td>{{question.comment}}</td>
         </tr>
@@ -46,26 +49,35 @@ interface Config {
 @Component({})
 export default class Create extends Vue {
   db = firebase.firestore()
+  gameId: string = ''
   question: string = ''
   comment: string = ''
-  questionsTable: string = 'typing-beta-linux-questions'
-  configTable: string = 'typing-beta-linux-config'
+  questionsTable: string = ''
+  rankingTable: string = ''
+  configTable: string = ''
+  isHidden: boolean = false
   questions: type.Question[] = []
   config: Config = {
     questionCount: 0
   }
 
   mounted() {
-    this.getQuestionsCount()
+    this.gameId = this.$route.params.gameId
+    this.questionsTable = 'typing-beta-' + this.gameId + '-questions'
+    this.rankingTable = 'typing-beta-' + this.gameId + '-rankings'
+    this.configTable = 'typing-beta-' + this.gameId + '-config'
+    this.getQuestions()
   }
 
   async submit() {
+    this.isHidden = true
     await this.getConfig()
     await this.addQuestion()
     await this.updateConfig()
     this.question = ''
     this.comment = ''
-    await this.getQuestionsCount()
+    await this.getQuestions()
+    this.isHidden = false
   }
 
   async addQuestion(): Promise<void> {
@@ -74,6 +86,7 @@ export default class Create extends Vue {
       question: this.question,
       comment: this.comment
     }
+
     await this.db
       .collection(this.questionsTable)
       .doc(String(this.config.questionCount + 1))
@@ -85,12 +98,12 @@ export default class Create extends Vue {
         console.error('Error writing document: ', error)
       })
   }
-  getQuestionsCount(): Promise<number> {
+  getQuestions(): Promise<number> {
     return new Promise(resolve => {
       this.questions = []
       this.db
         .collection(this.questionsTable)
-        .orderBy('questionNumber', 'asc')
+        .orderBy('questionId', 'asc')
         .get()
         .then(querySnapshot => {
           this.questions = []
@@ -99,7 +112,6 @@ export default class Create extends Vue {
             this.questions.push(qs)
             return resolve(this.questions.length)
           })
-          console.log('データ数取得')
         })
         .catch(err => {
           console.log(err)
@@ -116,7 +128,12 @@ export default class Create extends Vue {
         .then(doc => {
           if (doc.exists) {
             this.config = doc.data() as Config
+            console.log(this.config)
           }
+          resolve()
+        })
+        .catch(error => {
+          console.log(error)
         })
     })
   }
@@ -128,6 +145,7 @@ export default class Create extends Vue {
         .update({ questionCount: this.config.questionCount + 1 })
         .then(() => {
           console.log('config更新成功')
+          resolve()
         })
         .catch(() => {
           console.log('config更新失敗')
@@ -136,3 +154,13 @@ export default class Create extends Vue {
   }
 }
 </script>
+
+<style>
+.table {
+  margin: 0 auto;
+  border: 1rem;
+}
+.hidden {
+  display: none;
+}
+</style>

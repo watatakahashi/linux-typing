@@ -9,3 +9,7 @@ export interface Ranking {
   username: string
   score: number
 }
+
+export interface Config {
+  questionCount: number
+}

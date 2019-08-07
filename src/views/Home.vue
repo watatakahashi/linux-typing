@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <div>Linuxコマンドタイピング</div>
+    <div>{{gameId}}コマンドタイピング</div>
     <div v-if="starting">
       <div v-if="playing">
         <div>問題数：{{questionIndex + 1}}/{{questions.length}}</div>
@@ -14,7 +14,7 @@
         </h1>
       </div>
       <div v-else>
-        <button @click="finish">ホームへ</button>
+        <router-link :to="{ name: 'index'}">ホームへ</router-link>
         <h2>スコア</h2>
         <div>タイプ数:{{typeCount}}回</div>
         <div>タイプミス回数：{{typeMissCount}}回</div>
@@ -52,7 +52,7 @@
               <th>解説</th>
             </tr>
             <tr v-for="(question,index) in questions" v-bind:key="index">
-              <td>{{question.questionNumber}}</td>
+              <td>{{question.questionId}}</td>
               <td>{{question.question}}</td>
               <td>{{question.comment}}</td>
             </tr>
@@ -78,6 +78,7 @@ import * as type from '@/types/type'
 export default class Home extends Vue {
   // 定数
   db = firebase.firestore()
+  gameId: string = ''
   questionsTable: string = 'typing-beta-questions'
   rankingTable: string = 'typing-beta-rankings'
   QuestionCount = 10
@@ -100,6 +101,9 @@ export default class Home extends Vue {
   buffer?: AudioBuffer
 
   async created(): Promise<void> {
+    this.gameId = this.$route.params.gameId
+    this.questionsTable = 'typing-beta-' + this.gameId + '-questions'
+    this.rankingTable = 'typing-beta-' + this.gameId + '-rankings'
     await this.getRanking()
     this.onloadSound()
     this.reset()
