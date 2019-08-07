@@ -39,34 +39,44 @@ import * as audio from '@/plugin/audio'
 import * as utils from '@/plugin/utils'
 import * as type from '@/types/type'
 
+interface Config {
+  questionCount: number
+}
+
 @Component({})
 export default class Create extends Vue {
   db = firebase.firestore()
   question: string = ''
   comment: string = ''
-  questionsTable: string = 'typing-questions-beta'
+  questionsTable: string = 'typing-beta-linux-questions'
+  configTable: string = 'typing-beta-linux-config'
   questions: type.Question[] = []
+  config: Config = {
+    questionCount: 0
+  }
 
   mounted() {
     this.getQuestionsCount()
   }
 
   async submit() {
-    await this.getQuestionsCount()
+    await this.getConfig()
     await this.addQuestion()
+    await this.updateConfig()
     this.question = ''
     this.comment = ''
+    await this.getQuestionsCount()
   }
 
   async addQuestion(): Promise<void> {
     let question: type.Question = {
-      questionNumber: String(this.questions.length + 1),
+      questionId: String(this.config.questionCount + 1),
       question: this.question,
       comment: this.comment
     }
     await this.db
       .collection(this.questionsTable)
-      .doc(String(this.questions.length + 1))
+      .doc(String(this.config.questionCount + 1))
       .set(question)
       .then(function() {
         console.log('Document successfully written!')
@@ -94,6 +104,33 @@ export default class Create extends Vue {
         .catch(err => {
           console.log(err)
           return resolve(0)
+        })
+    })
+  }
+  getConfig(): Promise<void> {
+    return new Promise(resolve => {
+      this.db
+        .collection(this.configTable)
+        .doc('config')
+        .get()
+        .then(doc => {
+          if (doc.exists) {
+            this.config = doc.data() as Config
+          }
+        })
+    })
+  }
+  updateConfig(): Promise<void> {
+    return new Promise(resolve => {
+      this.db
+        .collection(this.configTable)
+        .doc('config')
+        .update({ questionCount: this.config.questionCount + 1 })
+        .then(() => {
+          console.log('config更新成功')
+        })
+        .catch(() => {
+          console.log('config更新失敗')
         })
     })
   }

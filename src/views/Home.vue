@@ -78,8 +78,8 @@ import * as type from '@/types/type'
 export default class Home extends Vue {
   // 定数
   db = firebase.firestore()
-  questionsTable: string = 'typing-questions-beta'
-  rankingTable: string = 'typing-ranking-beta'
+  questionsTable: string = 'typing-beta-questions'
+  rankingTable: string = 'typing-beta-rankings'
   QuestionCount = 10
   // 画面表示用
   starting: boolean = false
@@ -292,7 +292,7 @@ export default class Home extends Vue {
         this.questions = []
         querySnapshot.forEach(document => {
           const qs: type.Question = {
-            questionNumber: document.id,
+            questionId: document.id,
             question: document.data().question,
             comment: document.data().comment
           }

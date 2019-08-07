@@ -1,6 +1,6 @@
 export interface Question {
   // id: string
-  questionNumber: string
+  questionId: string
   question: string
   comment: string
 }
