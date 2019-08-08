@@ -12,6 +12,7 @@
       <div>
         <button @click="submit" :class="{hidden:isHidden}">問題を登録</button>
       </div>
+      <div>※間違えて登録した場合は削除してください</div>
     </div>
     <div>
       <router-link :to="{ name: 'index'}">ホームへ</router-link>

@@ -15,10 +15,7 @@ export const addDocumentId = (tableName: string, docId: string) => {
   db.collection(tableName)
     .doc(docId)
     .update({ id: docId })
-    .then(() => {
-      console.log('id転記完了')
-    })
-    .catch(() => {
-      console.log('id転記失敗')
+    .catch(error => {
+      console.log(error)
     })
 }
