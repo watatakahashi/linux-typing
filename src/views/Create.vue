@@ -84,18 +84,17 @@ export default class Create extends Vue {
     let question: type.Question = {
       questionId: String(this.config.questionCount + 1),
       question: this.question,
-      comment: this.comment
+      comment: this.comment,
+      createdAt: new Date()
     }
 
     await this.db
       .collection(this.questionsTable)
       .doc(String(this.config.questionCount + 1))
       .set(question)
-      .then(function() {
-        console.log('Document successfully written!')
-      })
-      .catch(function(error) {
-        console.error('Error writing document: ', error)
+      .then(() => {})
+      .catch(error => {
+        console.error(error)
       })
   }
   getQuestions(): Promise<number> {

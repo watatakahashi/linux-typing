@@ -55,14 +55,11 @@
     </div>
     <div v-else>
       <div>
-        <button @click="start">開始する</button>
-      </div>
-      <div>
         名前：
         <input type="text" v-model="username" />
       </div>
       <div>
-        <button @click="addRanking" :class="{hidden:isHidden}">ランキングに登録</button>
+        <button @click="start">開始する</button>
       </div>
     </div>
   </div>
@@ -256,29 +253,17 @@ export default class Home extends Vue {
       score: this.score,
       typeCount: this.typeCount,
       typeMissCount: this.typeMissCount,
-      timer: this.timer
+      timer: this.timer,
+      createdAt: new Date()
     }
     await this.db
       .collection(this.rankingTable)
       .add(ranking)
       .then(doc => {
-        this.addDocumentId(this.rankingTable, doc.id)
+        utils.addDocumentId(this.rankingTable, doc.id)
       })
       .catch(error => {
         console.error(error)
-      })
-  }
-
-  addDocumentId(tableName: string, docId: string): void {
-    this.db
-      .collection(tableName)
-      .doc(docId)
-      .update({ id: docId })
-      .then(() => {
-        console.log('id転記完了')
-      })
-      .catch(() => {
-        console.log('id転記失敗')
       })
   }
 
@@ -306,7 +291,8 @@ export default class Home extends Vue {
           const qs: type.Question = {
             questionId: document.id,
             question: document.data().question,
-            comment: document.data().comment
+            comment: document.data().comment,
+            createdAt: document.data().createdAt
           }
           this.questions.push(qs)
         })

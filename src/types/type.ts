@@ -3,6 +3,7 @@ export interface Question {
   questionId: string
   question: string
   comment: string
+  createdAt: Date | firebase.firestore.Timestamp
 }
 export interface Ranking {
   id: string
@@ -11,6 +12,7 @@ export interface Ranking {
   typeCount: number
   typeMissCount: number
   timer: number
+  createdAt: Date | firebase.firestore.Timestamp
 }
 
 export interface Config {
