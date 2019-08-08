@@ -14,7 +14,7 @@
       </div>
     </div>
     <div>
-      <router-link :to="{ name: 'index'}">戻る</router-link>
+      <router-link :to="{ name: 'index'}">ホームへ</router-link>
     </div>
     <div>
       <h2>{{gameId}}問題テーブル</h2>
@@ -77,11 +77,11 @@ export default class Create extends Vue {
     this.isHidden = true
     await this.getConfig()
     await this.addQuestion()
-    await this.updateConfig()
+    this.updateConfig()
     this.question = ''
     this.comment = ''
-    await this.getQuestions()
     this.isHidden = false
+    await this.getQuestions()
   }
   async deleteCheck(question: type.Question) {
     if (confirm('この問題を削除してもよろしいですか？')) {
@@ -103,32 +103,27 @@ export default class Create extends Vue {
       .collection(this.questionsTable)
       .doc(String(this.config.questionCount + 1))
       .set(question)
-      .then(() => {})
       .catch(error => {
         console.error(error)
       })
   }
-  getQuestions(): Promise<number> {
-    return new Promise(resolve => {
-      this.questions = []
-      this.db
-        .collection(this.questionsTable)
-        .where('valid', '==', true)
-        .orderBy('createdAt', 'desc')
-        .get()
-        .then(querySnapshot => {
-          this.questions = []
-          querySnapshot.forEach(document => {
-            const qs: type.Question = document.data() as type.Question
-            this.questions.push(qs)
-            return resolve(this.questions.length)
-          })
+  async getQuestions(): Promise<void> {
+    this.questions = []
+    await this.db
+      .collection(this.questionsTable)
+      .where('valid', '==', true)
+      .orderBy('createdAt', 'desc')
+      .get()
+      .then(querySnapshot => {
+        this.questions = []
+        querySnapshot.forEach(document => {
+          const qs: type.Question = document.data() as type.Question
+          this.questions.push(qs)
         })
-        .catch(err => {
-          console.log(err)
-          return resolve(0)
-        })
-    })
+      })
+      .catch(err => {
+        console.log(err)
+      })
   }
   getConfig(): Promise<void> {
     return new Promise(resolve => {
@@ -139,7 +134,6 @@ export default class Create extends Vue {
         .then(doc => {
           if (doc.exists) {
             this.config = doc.data() as Config
-            console.log(this.config)
           }
           resolve()
         })
@@ -148,20 +142,14 @@ export default class Create extends Vue {
         })
     })
   }
-  updateConfig(): Promise<void> {
-    return new Promise(resolve => {
-      this.db
-        .collection(this.configTable)
-        .doc('config')
-        .update({ questionCount: this.config.questionCount + 1 })
-        .then(() => {
-          console.log('config更新成功')
-          resolve()
-        })
-        .catch(() => {
-          console.log('config更新失敗')
-        })
-    })
+  updateConfig(): void {
+    this.db
+      .collection(this.configTable)
+      .doc('config')
+      .update({ questionCount: this.config.questionCount + 1 })
+      .catch(error => {
+        console.log(error)
+      })
   }
   async deleteQuestion(question: type.Question): Promise<void> {
     await this.db

@@ -61,6 +61,9 @@
       <div>
         <button @click="start">開始する</button>
       </div>
+      <div>
+        <router-link :to="{ name: 'index'}">ホームへ</router-link>
+      </div>
     </div>
   </div>
 </template>
