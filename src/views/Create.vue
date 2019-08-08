@@ -23,11 +23,15 @@
           <th>問題番号</th>
           <th>問題文</th>
           <th>解説</th>
+          <th>削除</th>
         </tr>
         <tr v-for="(question,index) in questions" v-bind:key="index">
           <td>{{question.questionId}}</td>
           <td>{{question.question}}</td>
           <td>{{question.comment}}</td>
+          <td>
+            <span class="delete" @click="deleteCheck(question)">×</span>
+          </td>
         </tr>
       </table>
     </div>
@@ -79,13 +83,20 @@ export default class Create extends Vue {
     await this.getQuestions()
     this.isHidden = false
   }
+  async deleteCheck(question: type.Question) {
+    if (confirm('この問題を削除してもよろしいですか？')) {
+      await this.deleteQuestion(question)
+      await this.getQuestions()
+    }
+  }
 
   async addQuestion(): Promise<void> {
     let question: type.Question = {
       questionId: String(this.config.questionCount + 1),
       question: this.question,
       comment: this.comment,
-      createdAt: new Date()
+      createdAt: new Date(),
+      valid: true
     }
 
     await this.db
@@ -102,7 +113,8 @@ export default class Create extends Vue {
       this.questions = []
       this.db
         .collection(this.questionsTable)
-        .orderBy('questionId', 'asc')
+        .where('valid', '==', true)
+        .orderBy('createdAt', 'desc')
         .get()
         .then(querySnapshot => {
           this.questions = []
@@ -151,6 +163,12 @@ export default class Create extends Vue {
         })
     })
   }
+  async deleteQuestion(question: type.Question): Promise<void> {
+    await this.db
+      .collection(this.questionsTable)
+      .doc(question.questionId)
+      .update({ valid: false })
+  }
 }
 </script>
 
@@ -161,5 +179,8 @@ export default class Create extends Vue {
 }
 .hidden {
   display: none;
+}
+.delete {
+  cursor: pointer;
 }
 </style>

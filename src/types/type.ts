@@ -4,6 +4,7 @@ export interface Question {
   question: string
   comment: string
   createdAt: Date | firebase.firestore.Timestamp
+  valid: boolean
 }
 export interface Ranking {
   id: string

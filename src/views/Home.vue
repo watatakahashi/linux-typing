@@ -284,16 +284,12 @@ export default class Home extends Vue {
   async getQuestions(): Promise<void> {
     await this.db
       .collection(this.questionsTable)
+      .where('valid', '==', true)
       .get()
       .then(querySnapshot => {
         this.questions = []
         querySnapshot.forEach(document => {
-          const qs: type.Question = {
-            questionId: document.id,
-            question: document.data().question,
-            comment: document.data().comment,
-            createdAt: document.data().createdAt
-          }
+          const qs: type.Question = document.data() as type.Question
           this.questions.push(qs)
         })
         this.questions = utils.arrayShuffle(this.questions)
