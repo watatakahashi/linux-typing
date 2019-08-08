@@ -21,13 +21,6 @@
         <div>経過時間：{{timer}}秒</div>
         <div>タイピング速度：{{typeSpeed}}回/秒</div>
         <div>スコア：{{score}}</div>
-        <div>
-          名前：
-          <input type="text" v-model="username" />
-        </div>
-        <div>
-          <button @click="addRanking" :class="{hidden:isHidden}">ランキングに登録</button>
-        </div>
         <h2>ランキング</h2>
         <div>
           <table class="table" border="1">
@@ -61,7 +54,16 @@
       </div>
     </div>
     <div v-else>
-      <button @click="start">開始する</button>
+      <div>
+        <button @click="start">開始する</button>
+      </div>
+      <div>
+        名前：
+        <input type="text" v-model="username" />
+      </div>
+      <div>
+        <button @click="addRanking" :class="{hidden:isHidden}">ランキングに登録</button>
+      </div>
     </div>
   </div>
 </template>
@@ -90,13 +92,19 @@ export default class Home extends Vue {
   questions: type.Question[] = []
   questionIndex: number = 0
   charIndex: number = 0
+
   // 記録用
+  // タイプ数
   typeCount: number = 0
+  // ミスタイプ数
   typeMissCount: number = 0
+  // 経過時間
   timer: number = -1
+  // デフォ名
   username: string = '名無し'
-  // ランキング用
+  // ランキングデータ
   rankingList: type.Ranking[] = []
+
   // AudioContextを初期化
   buffer?: AudioBuffer
 
@@ -239,23 +247,41 @@ export default class Home extends Vue {
     this.questionIndex = 0
     window.removeEventListener('keypress', this.keyCheck)
     alert('クリア！')
+    this.addRanking()
   }
   async addRanking(): Promise<void> {
-    this.isHidden = true
-    // return
+    const ranking: type.Ranking = {
+      id: '',
+      username: this.username,
+      score: this.score,
+      typeCount: this.typeCount,
+      typeMissCount: this.typeMissCount,
+      timer: this.timer
+    }
     await this.db
       .collection(this.rankingTable)
-      .add({
-        username: this.username,
-        score: this.score
-      })
-      .then(() => {
-        console.log('ランキングデータ追加')
+      .add(ranking)
+      .then(doc => {
+        this.addDocumentId(this.rankingTable, doc.id)
       })
       .catch(error => {
-        console.error('Error writing document: ', error)
+        console.error(error)
       })
   }
+
+  addDocumentId(tableName: string, docId: string): void {
+    this.db
+      .collection(tableName)
+      .doc(docId)
+      .update({ id: docId })
+      .then(() => {
+        console.log('id転記完了')
+      })
+      .catch(() => {
+        console.log('id転記失敗')
+      })
+  }
+
   async getRanking(): Promise<void> {
     await this.db
       .collection(this.rankingTable)
@@ -264,30 +290,12 @@ export default class Home extends Vue {
       .onSnapshot(querySnapshot => {
         this.rankingList = []
         querySnapshot.forEach(document => {
-          const ranking: type.Ranking = {
-            id: document.id,
-            username: document.data().username,
-            score: document.data().score
-          }
+          const ranking: type.Ranking = document.data() as type.Ranking
           this.rankingList.push(ranking)
         })
       })
   }
-  async addQuestion(): Promise<void> {
-    this.db
-      .collection(this.questionsTable)
-      .doc('3')
-      .set({
-        question: ' uuu',
-        comment: 'コメント3'
-      })
-      .then(function() {
-        console.log('Document successfully written!')
-      })
-      .catch(function(error) {
-        console.error('Error writing document: ', error)
-      })
-  }
+
   async getQuestions(): Promise<void> {
     await this.db
       .collection(this.questionsTable)
