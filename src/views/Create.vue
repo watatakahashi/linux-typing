@@ -3,14 +3,14 @@
     <div>
       <div>
         問題文：
-        <input type="text" v-model="question" placeholder="e.g. cd hoge" />
+        <input type="text" v-model="questionDraft.question" placeholder="e.g. cd hoge" />
       </div>
       <div>
         コメント：
-        <input type="text" v-model="comment" placeholder="e.g. hogeに移動する" />
+        <input type="text" v-model="questionDraft.comment" placeholder="e.g. hogeに移動する" />
       </div>
       <div>
-        <button @click="submit" :class="{hidden:isHidden}">問題を登録</button>
+        <button @click="submit" :class="{hidden:isHidden}" :disabled="isDisabled">問題を登録</button>
       </div>
       <div>※間違えて登録した場合は削除してください</div>
     </div>
@@ -53,14 +53,22 @@ interface Config {
 
 @Component({})
 export default class Create extends Vue {
+  // 画面情報
   db = firebase.firestore()
   gameId: string = ''
-  question: string = ''
-  comment: string = ''
-  questionsTable: string = ''
-  rankingTable: string = ''
-  configTable: string = ''
   isHidden: boolean = false
+  isDisabled: boolean = true
+  // 作成する問題
+  questionDraft: type.Question = {
+    questionId: '',
+    question: '',
+    comment: '',
+    createdAt: new Date(),
+    valid: true
+  }
+  // テーブル用
+  questionsTable: string = ''
+  configTable: string = ''
   questions: type.Question[] = []
   config: Config = {
     questionCount: 0
@@ -69,20 +77,22 @@ export default class Create extends Vue {
   mounted() {
     this.gameId = this.$route.params.gameId
     this.questionsTable = 'typing-beta-' + this.gameId + '-questions'
-    this.rankingTable = 'typing-beta-' + this.gameId + '-rankings'
     this.configTable = 'typing-beta-' + this.gameId + '-config'
     this.getQuestions()
   }
 
   async submit() {
-    this.isHidden = true
+    this.isDisabled = true
     await this.getConfig()
     await this.addQuestion()
     this.updateConfig()
-    this.question = ''
-    this.comment = ''
-    this.isHidden = false
+    this.reset()
+    this.isDisabled = false
     await this.getQuestions()
+  }
+  reset() {
+    this.questionDraft.question = ''
+    this.questionDraft.comment = ''
   }
   async deleteCheck(question: type.Question) {
     if (confirm('この問題を削除してもよろしいですか？')) {
@@ -92,18 +102,13 @@ export default class Create extends Vue {
   }
 
   async addQuestion(): Promise<void> {
-    let question: type.Question = {
-      questionId: String(this.config.questionCount + 1),
-      question: this.question,
-      comment: this.comment,
-      createdAt: new Date(),
-      valid: true
-    }
+    this.questionDraft.questionId = String(this.config.questionCount + 1)
+    this.questionDraft.createdAt = new Date()
 
     await this.db
       .collection(this.questionsTable)
       .doc(String(this.config.questionCount + 1))
-      .set(question)
+      .set(this.questionDraft)
       .catch(error => {
         console.error(error)
       })
@@ -157,6 +162,11 @@ export default class Create extends Vue {
       .collection(this.questionsTable)
       .doc(question.questionId)
       .update({ valid: false })
+  }
+  @Watch('questionDraft.question')
+  onWatchChanged(val: string): void {
+    var reg = new RegExp(/^[a-zA-Z0-9!-/:-@¥[-`{-~\s]*$/)
+    this.isDisabled = reg.test(val) && val != '' ? false : true
   }
 }
 </script>
