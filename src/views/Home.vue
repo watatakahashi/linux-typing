@@ -3,7 +3,7 @@
     <div>{{gameId}}コマンドタイピング</div>
     <div v-if="starting">
       <div v-if="playing">
-        <div>問題数：{{questionIndex + 1}}/{{questions.length}}</div>
+        <div>問題数：{{questionIndex + 1}}/{{questionList.length}}</div>
         <div>タイプミス回数：{{typeMissCount}}回</div>
         <div>経過時間：{{timer}}秒</div>
         <h1>{{comment}}</h1>
@@ -22,21 +22,7 @@
         <div>タイピング速度：{{typeSpeed}}回/秒</div>
         <div>スコア：{{score}}</div>
         <RankingTable :gameId="gameId" />
-        <h2>問題履歴</h2>
-        <div>
-          <table class="table" border="1">
-            <tr>
-              <th>問題番号</th>
-              <th>問題文</th>
-              <th>解説</th>
-            </tr>
-            <tr v-for="(question,index) in questions" v-bind:key="index">
-              <td>{{question.questionId}}</td>
-              <td>{{question.question}}</td>
-              <td>{{question.comment}}</td>
-            </tr>
-          </table>
-        </div>
+        <QuestionTable :questionList="questionList" />
       </div>
     </div>
     <div v-else>
@@ -60,16 +46,17 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import RankingTable from '@/components/RankingTable.vue'
+import QuestionTable from '@/components/QuestionTable.vue'
 import * as firebase from 'firebase/app'
 import 'firebase/firestore'
 import * as audio from '@/plugin/audio'
 import * as utils from '@/plugin/utils'
 import * as type from '@/types/type'
 
-@Component({ components: { RankingTable } })
+@Component({ components: { RankingTable, QuestionTable } })
 export default class Home extends Vue {
   // 定数
-  db = firebase.firestore()
+  db: firebase.firestore.Firestore = firebase.firestore()
   gameId: string = ''
   questionsTable: string = 'typing-beta-questions'
   QuestionCount = 10
@@ -78,7 +65,7 @@ export default class Home extends Vue {
   playing: boolean = false
   isHidden: boolean = false
   // 問題回答用
-  questions: type.Question[] = []
+  questionList: type.Question[] = []
   questionIndex: number = 0
   charIndex: number = 0
 
@@ -159,20 +146,18 @@ export default class Home extends Vue {
 
   // 問題を表示
   get question(): string {
-    if (this.questions.length === 0) {
-      return ''
-    }
-    return this.questions[this.questionIndex].question
+    return this.questionList.length === 0
+      ? ''
+      : this.questionList[this.questionIndex].question
   }
   // コメントを表示
   get comment(): string {
-    if (this.questions.length === 0) {
-      return ''
-    }
-    return this.questions[this.questionIndex].comment
+    return this.questionList.length === 0
+      ? ''
+      : this.questionList[this.questionIndex].comment
   }
 
-  // タイプしたと比較用の回答
+  // 比較用の回答
   get replacedAnswer(): string {
     return this.question.replace(/ /g, '□')
   }
@@ -182,6 +167,7 @@ export default class Home extends Vue {
     return this.replacedAnswer.slice(0, this.charIndex)
   }
 
+  // 回答文字
   get nowAnswer(): string {
     return this.replacedAnswer.slice(this.charIndex, this.charIndex + 1)
   }
@@ -211,7 +197,7 @@ export default class Home extends Vue {
   // 全回答文字数
   get questionsTotalChars(): number {
     let sum = 0
-    this.questions.forEach(element => {
+    this.questionList.forEach(element => {
       sum += element.question.length
     })
     return sum
@@ -223,7 +209,7 @@ export default class Home extends Vue {
     if (val === this.replacedAnswer) {
       this.questionIndex += 1
       this.charIndex = 0
-      if (this.questions.length === this.questionIndex) {
+      if (this.questionList.length === this.questionIndex) {
         this.gameClear()
       }
     }
@@ -263,13 +249,13 @@ export default class Home extends Vue {
       .where('valid', '==', true)
       .get()
       .then(querySnapshot => {
-        this.questions = []
+        this.questionList = []
         querySnapshot.forEach(document => {
           const qs: type.Question = document.data() as type.Question
-          this.questions.push(qs)
+          this.questionList.push(qs)
         })
-        this.questions = utils.arrayShuffle(this.questions)
-        this.questions = this.questions.slice(0, this.QuestionCount)
+        this.questionList = utils.arrayShuffle(this.questionList)
+        this.questionList = this.questionList.slice(0, this.QuestionCount)
       })
       .catch(err => {
         console.log(err)
