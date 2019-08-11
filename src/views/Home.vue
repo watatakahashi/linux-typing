@@ -21,21 +21,7 @@
         <div>経過時間：{{timer}}秒</div>
         <div>タイピング速度：{{typeSpeed}}回/秒</div>
         <div>スコア：{{score}}</div>
-        <h2>ランキング</h2>
-        <div>
-          <table class="table" border="1">
-            <tr>
-              <th>順位</th>
-              <th>名前</th>
-              <th>スコア</th>
-            </tr>
-            <tr v-for="(ranking,index) in rankingList" v-bind:key="index">
-              <td>{{index + 1}}位</td>
-              <td>{{ranking.username}}</td>
-              <td>{{ranking.score}}</td>
-            </tr>
-          </table>
-        </div>
+        <RankingTable :gameId="gameId" />
         <h2>問題履歴</h2>
         <div>
           <table class="table" border="1">
@@ -64,25 +50,28 @@
       <div>
         <router-link :to="{ name: 'index'}">ホームへ</router-link>
       </div>
+      <div>
+        <RankingTable :gameId="gameId" />
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
+import RankingTable from '@/components/RankingTable.vue'
 import * as firebase from 'firebase/app'
 import 'firebase/firestore'
 import * as audio from '@/plugin/audio'
 import * as utils from '@/plugin/utils'
 import * as type from '@/types/type'
 
-@Component({})
+@Component({ components: { RankingTable } })
 export default class Home extends Vue {
   // 定数
   db = firebase.firestore()
   gameId: string = ''
   questionsTable: string = 'typing-beta-questions'
-  rankingTable: string = 'typing-beta-rankings'
   QuestionCount = 10
   // 画面表示用
   starting: boolean = false
@@ -102,8 +91,8 @@ export default class Home extends Vue {
   timer: number = -1
   // デフォ名
   username: string = '名無し'
-  // ランキングデータ
-  rankingList: type.Ranking[] = []
+  // ランキング用
+  rankingTable: string = 'typing-beta-rankings'
 
   // AudioContextを初期化
   buffer?: AudioBuffer
@@ -111,8 +100,6 @@ export default class Home extends Vue {
   async created(): Promise<void> {
     this.gameId = this.$route.params.gameId
     this.questionsTable = 'typing-beta-' + this.gameId + '-questions'
-    this.rankingTable = 'typing-beta-' + this.gameId + '-rankings'
-    await this.getRanking()
     this.onloadSound()
     this.reset()
   }
@@ -267,20 +254,6 @@ export default class Home extends Vue {
       })
       .catch(error => {
         console.error(error)
-      })
-  }
-
-  async getRanking(): Promise<void> {
-    await this.db
-      .collection(this.rankingTable)
-      .orderBy('score', 'desc')
-      .limit(5)
-      .onSnapshot(querySnapshot => {
-        this.rankingList = []
-        querySnapshot.forEach(document => {
-          const ranking: type.Ranking = document.data() as type.Ranking
-          this.rankingList.push(ranking)
-        })
       })
   }
 
