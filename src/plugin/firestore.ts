@@ -22,26 +22,56 @@ export const addDocumentId = (tableName: string, docId: string): void => {
 /**
  * 問題リストを取得
  * @param questionsTable
- * @param questionCount
  */
-export const getQuestionList = async (questionsTable: string, questionCount: number): Promise<type.Question[]> => {
+export const getQuestionList = async (questionsTable: string): Promise<type.Question[]> => {
   let questionList: type.Question[] = []
   await main.db
     .collection(questionsTable)
     .where('valid', '==', true)
+    .orderBy('createdAt', 'desc')
     .get()
     .then(querySnapshot => {
       querySnapshot.forEach(document => {
         const qs: type.Question = document.data() as type.Question
         questionList.push(qs)
       })
-      questionList = utils.arrayShuffle(questionList)
-      questionList = questionList.slice(0, questionCount)
     })
     .catch(err => {
       console.log(err)
     })
   return questionList
+}
+/**
+ * 問題を追加
+ * @param questionsTable
+ * @param questionDraft
+ * @param config
+ */
+export const addQuestion = async (
+  questionsTable: string,
+  questionDraft: type.Question,
+  config: type.Config
+): Promise<void> => {
+  questionDraft.questionId = String(config.questionCount + 1)
+  questionDraft.createdAt = new Date()
+  await main.db
+    .collection(questionsTable)
+    .doc(String(config.questionCount + 1))
+    .set(questionDraft)
+    .catch(error => {
+      console.error(error)
+    })
+}
+/**
+ * 問題を削除
+ * @param questionsTable
+ * @param question
+ */
+export const deleteQuestion = async (questionsTable: string, question: type.Question): Promise<void> => {
+  await main.db
+    .collection(questionsTable)
+    .doc(question.questionId)
+    .update({ valid: false })
 }
 
 /**
@@ -81,5 +111,40 @@ export const addRanking = async (rankingTable: string, ranking: type.Ranking): P
     })
     .catch(error => {
       console.error(error)
+    })
+}
+
+/**
+ * 設定情報を取得
+ * @param configTable
+ * @param config
+ */
+export const getConfig = async (configTable: string, config: type.Config): Promise<type.Config> => {
+  await main.db
+    .collection(configTable)
+    .doc('config')
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        config = doc.data() as type.Config
+      }
+    })
+    .catch(error => {
+      console.log(error)
+    })
+  return config
+}
+/**
+ * 設定情報を更新
+ * @param configTable
+ * @param config
+ */
+export const updateConfig = (configTable: string, config: type.Config): void => {
+  main.db
+    .collection(configTable)
+    .doc('config')
+    .update({ questionCount: config.questionCount + 1 })
+    .catch(error => {
+      console.log(error)
     })
 }

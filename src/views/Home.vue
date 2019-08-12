@@ -58,7 +58,7 @@ import * as type from '@/types/type'
 export default class Home extends Vue {
   // 定数
   db: firebase.firestore.Firestore = firebase.firestore()
-  QuestionCount = 10
+  questionCount = 10
   // AudioContextを初期化
   buffer?: AudioBuffer
 
@@ -116,7 +116,9 @@ export default class Home extends Vue {
   }
   // 初期化処理
   async reset(): Promise<void> {
-    this.questionList = await firestore.getQuestionList(this.questionsTable, this.QuestionCount)
+    this.questionList = await firestore.getQuestionList(this.questionsTable)
+    this.questionList = utils.arrayShuffle(this.questionList)
+    this.questionList = this.questionList.slice(0, this.questionCount)
     this.questionIndex = 0
     this.charIndex = 0
     this.typeCount = 0
