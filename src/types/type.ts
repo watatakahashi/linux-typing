@@ -1,5 +1,4 @@
 export interface Question {
-  // id: string
   questionId: string
   question: string
   comment: string

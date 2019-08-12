@@ -51,19 +51,26 @@ import * as firebase from 'firebase/app'
 import 'firebase/firestore'
 import * as audio from '@/plugin/audio'
 import * as utils from '@/plugin/utils'
+import * as firestore from '@/plugin/firestore'
 import * as type from '@/types/type'
 
 @Component({ components: { RankingTable, QuestionTable } })
 export default class Home extends Vue {
   // 定数
   db: firebase.firestore.Firestore = firebase.firestore()
+  QuestionCount = 10
+  // AudioContextを初期化
+  buffer?: AudioBuffer
+
+  // ゲーム種類用
   gameId: string = ''
   questionsTable: string = 'typing-beta-questions'
-  QuestionCount = 10
+
   // 画面表示用
   starting: boolean = false
   playing: boolean = false
   isHidden: boolean = false
+
   // 問題回答用
   questionList: type.Question[] = []
   questionIndex: number = 0
@@ -80,9 +87,6 @@ export default class Home extends Vue {
   username: string = '名無し'
   // ランキング用
   rankingTable: string = 'typing-beta-rankings'
-
-  // AudioContextを初期化
-  buffer?: AudioBuffer
 
   async created(): Promise<void> {
     this.gameId = this.$route.params.gameId
@@ -236,7 +240,7 @@ export default class Home extends Vue {
       .collection(this.rankingTable)
       .add(ranking)
       .then(doc => {
-        utils.addDocumentId(this.rankingTable, doc.id)
+        firestore.addDocumentId(this.rankingTable, doc.id)
       })
       .catch(error => {
         console.error(error)
