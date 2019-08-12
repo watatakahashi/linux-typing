@@ -91,6 +91,7 @@ export default class Home extends Vue {
   async created(): Promise<void> {
     this.gameId = this.$route.params.gameId
     this.questionsTable = 'typing-beta-' + this.gameId + '-questions'
+    this.rankingTable = 'typing-beta-' + this.gameId + '-rankings'
     this.onloadSound()
     this.reset()
   }
@@ -225,6 +226,7 @@ export default class Home extends Vue {
       timer: this.timer,
       createdAt: new Date()
     }
+
     firestore.addRanking(this.rankingTable, ranking)
     this.playing = false
     this.questionIndex = 0
