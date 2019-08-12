@@ -20,11 +20,8 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator'
-import * as firebase from 'firebase/app'
-import 'firebase/firestore'
-import * as audio from '@/plugin/audio'
-import * as utils from '@/plugin/utils'
 import * as type from '@/types/type'
+
 @Component
 export default class QuestionTable extends Vue {
   @Prop() private questionList!: type.Question[]

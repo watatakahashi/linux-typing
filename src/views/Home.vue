@@ -89,8 +89,6 @@ export default class Home extends Vue {
   rankingTable: string = 'typing-beta-rankings'
 
   async created(): Promise<void> {
-    console.log(process.env.VUE_APP_TEST);
-    
     this.gameId = this.$route.params.gameId
     this.questionsTable = 'typing-beta-' + this.gameId + '-questions'
     this.onloadSound()
@@ -118,7 +116,7 @@ export default class Home extends Vue {
   }
   // 初期化処理
   async reset(): Promise<void> {
-    await this.getQuestions()
+    this.questionList = await firestore.getQuestionList(this.questionsTable, this.QuestionCount)
     this.questionIndex = 0
     this.charIndex = 0
     this.typeCount = 0
@@ -152,15 +150,11 @@ export default class Home extends Vue {
 
   // 問題を表示
   get question(): string {
-    return this.questionList.length === 0
-      ? ''
-      : this.questionList[this.questionIndex].question
+    return this.questionList.length === 0 ? '' : this.questionList[this.questionIndex].question
   }
   // コメントを表示
   get comment(): string {
-    return this.questionList.length === 0
-      ? ''
-      : this.questionList[this.questionIndex].comment
+    return this.questionList.length === 0 ? '' : this.questionList[this.questionIndex].comment
   }
 
   // 比較用の回答
@@ -194,9 +188,7 @@ export default class Home extends Vue {
   // スコアはWPM(1分あたりの打鍵数)×正確率
   get score(): number {
     return Math.round(
-      (this.questionsTotalChars / this.timer) *
-        60 *
-        ((this.typeCount - this.typeMissCount) / this.typeCount)
+      (this.questionsTotalChars / this.timer) * 60 * ((this.typeCount - this.typeMissCount) / this.typeCount)
     )
   }
 
@@ -222,13 +214,6 @@ export default class Home extends Vue {
   }
   // クリア時の処理
   gameClear(): void {
-    this.playing = false
-    this.questionIndex = 0
-    window.removeEventListener('keypress', this.keyCheck)
-    alert('クリア！')
-    this.addRanking()
-  }
-  async addRanking(): Promise<void> {
     const ranking: type.Ranking = {
       id: '',
       username: this.username,
@@ -238,34 +223,11 @@ export default class Home extends Vue {
       timer: this.timer,
       createdAt: new Date()
     }
-    await this.db
-      .collection(this.rankingTable)
-      .add(ranking)
-      .then(doc => {
-        firestore.addDocumentId(this.rankingTable, doc.id)
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  async getQuestions(): Promise<void> {
-    await this.db
-      .collection(this.questionsTable)
-      .where('valid', '==', true)
-      .get()
-      .then(querySnapshot => {
-        this.questionList = []
-        querySnapshot.forEach(document => {
-          const qs: type.Question = document.data() as type.Question
-          this.questionList.push(qs)
-        })
-        this.questionList = utils.arrayShuffle(this.questionList)
-        this.questionList = this.questionList.slice(0, this.QuestionCount)
-      })
-      .catch(err => {
-        console.log(err)
-      })
+    firestore.addRanking(this.rankingTable, ranking)
+    this.playing = false
+    this.questionIndex = 0
+    window.removeEventListener('keypress', this.keyCheck)
+    alert('クリア！')
   }
 }
 </script>
