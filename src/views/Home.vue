@@ -89,6 +89,8 @@ export default class Home extends Vue {
   rankingTable: string = 'typing-beta-rankings'
 
   async created(): Promise<void> {
+    console.log(process.env.VUE_APP_TEST);
+    
     this.gameId = this.$route.params.gameId
     this.questionsTable = 'typing-beta-' + this.gameId + '-questions'
     this.onloadSound()
