@@ -110,11 +110,7 @@ export default class Home extends Vue {
     this.countUp()
     window.addEventListener('keypress', this.keyCheck)
   }
-  // ホーム画面へ戻る際に実行
-  finish(): void {
-    this.starting = false
-    this.reset()
-  }
+
   // 初期化処理
   async reset(): Promise<void> {
     this.questionList = await firestore.getQuestionList(this.questionsTable)
