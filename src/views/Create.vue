@@ -4,6 +4,8 @@
       <div>
         問題文：
         <input type="text" v-model="questionDraft.question" placeholder="e.g. cd hoge" />
+        <br />
+        <span class="isDisabled" v-show="isDisabled">半角英数記号スペースのみ可</span>
       </div>
       <div>
         コメント：
@@ -101,6 +103,7 @@ export default class Create extends Vue {
 
   @Watch('questionDraft.question')
   onWatchChanged(val: string): void {
+    // :TODO 全角スペース許可をさせないようにする
     var reg = new RegExp(/^[a-zA-Z0-9!-/:-@¥[-`{-~\s]*$/)
     this.isDisabled = reg.test(val) && val != '' ? false : true
   }
@@ -117,5 +120,8 @@ export default class Create extends Vue {
 }
 .delete {
   cursor: pointer;
+}
+.isDisabled {
+  color: red;
 }
 </style>

@@ -30,6 +30,7 @@
         名前：
         <input type="text" v-model="username" />
       </div>
+      <div>※ミスタイプ時に音が出ます</div>
       <div>
         <button @click="start">開始する</button>
       </div>
